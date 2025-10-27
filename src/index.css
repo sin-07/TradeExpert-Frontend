@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --brand-dark: #0b1220;
+  --brand: #0f172a;
+  --accent: #2563eb;
+  --muted: #94a3b8;
+}
+html,body,#root{height:100%}
+body{@apply bg-slate-50 text-slate-900 font-sans;}
+a{color:var(--accent);}
+.btn-primary{background:var(--accent); color:white;}
