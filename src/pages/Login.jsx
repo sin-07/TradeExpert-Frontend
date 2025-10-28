@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
+import api from '../utils/api'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
@@ -21,9 +22,17 @@ export default function Login(){
     e.preventDefault()
     setLoading(true)
     
-    const loadingToast = toast.loading('Logging in...')
+    const loadingToast = toast.loading('Connecting to server...')
     
     try {
+      // Wake up backend if needed
+      try {
+        await api.client.get('/health')
+        toast.loading('Logging in...', { id: loadingToast })
+      } catch (healthError) {
+        toast.loading('Waking up server... Please wait.', { id: loadingToast })
+      }
+      
       const response = await login(email, password)
       
       if (response?.requiresVerification) {
@@ -35,7 +44,20 @@ export default function Login(){
       toast.success('Welcome back!', { id: loadingToast })
       navigate('/dashboard')
     } catch (err) {
-      toast.error(err.message || 'Invalid credentials', { id: loadingToast })
+      let errorMessage = 'Login failed. Please try again.'
+      
+      if (err.message?.includes('timeout')) {
+        errorMessage = 'Server is starting up. Please wait a moment and try again.'
+      } else if (err.message?.includes('Network error')) {
+        errorMessage = 'Cannot reach server. Please check your connection.'
+      } else {
+        errorMessage = err.message || 'Invalid credentials'
+      }
+      
+      toast.error(errorMessage, { 
+        id: loadingToast,
+        duration: 5000 
+      })
     } finally {
       setLoading(false)
     }

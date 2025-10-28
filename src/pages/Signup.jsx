@@ -39,9 +39,20 @@ export default function Signup(){
     }
     
     setLoading(true)
-    const loadingToast = toast.loading('Creating your account...')
+    const loadingToast = toast.loading('Connecting to server...')
     
     try {
+      // First, wake up the backend with a health check
+      console.log('Checking backend health...')
+      try {
+        await api.client.get('/health')
+        console.log('Backend is awake')
+        toast.loading('Creating your account...', { id: loadingToast })
+      } catch (healthError) {
+        console.log('Waking up backend (this may take up to 60 seconds)...')
+        toast.loading('Waking up server... This may take a moment on first use.', { id: loadingToast })
+      }
+      
       console.log('Attempting signup with:', { name, email })
       const result = await api.signup(name, email, password)
       console.log('Signup successful:', result)
@@ -49,8 +60,23 @@ export default function Signup(){
       navigate('/verify-otp', { state: { email } })
     } catch (err) {
       console.error('Signup error:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Signup failed. Please try again.'
-      toast.error(errorMessage, { id: loadingToast })
+      
+      let errorMessage = 'Signup failed. Please try again.'
+      
+      if (err.message.includes('timeout')) {
+        errorMessage = 'Server is starting up (free tier). Please wait a moment and try again.'
+      } else if (err.message.includes('Network error')) {
+        errorMessage = 'Cannot reach server. Please check your internet connection.'
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      toast.error(errorMessage, { 
+        id: loadingToast,
+        duration: 5000 
+      })
     } finally {
       setLoading(false)
     }
