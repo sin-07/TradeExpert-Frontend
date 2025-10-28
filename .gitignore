@@ -47,3 +47,8 @@ dist-ssr
 # Hot Module Replacement
 *.hot-update.js
 *.hot-update.json
+
+# Documentation files
+*.md
+!package.json
+
