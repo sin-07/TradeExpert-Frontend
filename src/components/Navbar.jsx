@@ -3,18 +3,36 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TrendingUp, LogOut, LayoutDashboard, Menu, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import LogoutModal from './LogoutModal'
 
 export default function Navbar({ logged, setLogged }){
   const navigate = useNavigate()
   const location = useLocation()
   const { logout: authLogout, isAuthenticated, user } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   
-  const logout = ()=>{
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true)
+    setMobileMenuOpen(false)
+  }
+
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true)
+    
+    // Simulate logout process with a delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
     authLogout()
     setLogged(false)
-    setMobileMenuOpen(false)
+    setIsLoggingOut(false)
+    setShowLogoutModal(false)
     navigate('/login')
+  }
+
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false)
   }
   
   const isLogged = logged !== undefined ? logged : isAuthenticated
@@ -98,7 +116,7 @@ export default function Navbar({ logged, setLogged }){
                   </div>
                 )}
                 <button 
-                  onClick={logout} 
+                  onClick={handleLogoutClick} 
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500 text-white text-sm font-medium shadow-md hover:shadow-lg hover:bg-rose-600 transition-all"
                 >
                   <LogOut className="w-4 h-4" />
@@ -182,7 +200,7 @@ export default function Navbar({ logged, setLogged }){
                   </>
                 ) : (
                   <button 
-                    onClick={logout} 
+                    onClick={handleLogoutClick} 
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-rose-500 text-white text-sm font-medium shadow-md"
                   >
                     <LogOut className="w-4 h-4" />
@@ -194,6 +212,14 @@ export default function Navbar({ logged, setLogged }){
           )}
         </AnimatePresence>
       </div>
+
+      {/* Logout Modal */}
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={handleLogoutCancel}
+        onConfirm={handleLogoutConfirm}
+        isLoggingOut={isLoggingOut}
+      />
     </motion.nav>
   )
 }
