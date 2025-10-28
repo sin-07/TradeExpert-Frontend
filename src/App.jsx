@@ -6,6 +6,7 @@ import Signup from './pages/Signup'
 import Login from './pages/Login'
 import VerifyOTP from './pages/VerifyOTP'
 import Dashboard from './pages/Dashboard'
+import EnvTest from './pages/EnvTest'
 
 export default function App(){
   const { isAuthenticated, loading } = useAuth()
@@ -21,6 +22,7 @@ export default function App(){
       <Route path='/signup' element={<Signup/>} />
       <Route path='/login' element={<Login/>} />
       <Route path='/verify-otp' element={<VerifyOTP/>} />
+      <Route path='/env-test' element={<EnvTest/>} />
       <Route path='/dashboard' element={
         <PrivateRoute><Dashboard/></PrivateRoute>
       } />
