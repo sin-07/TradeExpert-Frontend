@@ -42,11 +42,15 @@ export default function Signup(){
     const loadingToast = toast.loading('Creating your account...')
     
     try {
-      await api.signup(name, email, password)
+      console.log('Attempting signup with:', { name, email })
+      const result = await api.signup(name, email, password)
+      console.log('Signup successful:', result)
       toast.success('Account created! Please check your email for OTP.', { id: loadingToast })
       navigate('/verify-otp', { state: { email } })
     } catch (err) {
-      toast.error(err.message || 'Signup failed', { id: loadingToast })
+      console.error('Signup error:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Signup failed. Please try again.'
+      toast.error(errorMessage, { id: loadingToast })
     } finally {
       setLoading(false)
     }
