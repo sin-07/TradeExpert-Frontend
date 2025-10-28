@@ -42,18 +42,8 @@ export default function Signup(){
     const loadingToast = toast.loading('Connecting to server...')
     
     try {
-      // First, wake up the backend with a health check
-      console.log('Checking backend health...')
-      try {
-        await api.client.get('/health')
-        console.log('Backend is awake')
-        toast.loading('Creating your account...', { id: loadingToast })
-      } catch (healthError) {
-        console.log('Waking up backend (this may take up to 60 seconds)...')
-        toast.loading('Waking up server... This may take a moment on first use.', { id: loadingToast })
-      }
-      
       console.log('Attempting signup with:', { name, email })
+      toast.loading('Creating your account...', { id: loadingToast })
       const result = await api.signup(name, email, password)
       console.log('Signup successful:', result)
       toast.success('Account created! Please check your email for OTP.', { id: loadingToast })
