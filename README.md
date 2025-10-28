@@ -2,6 +2,10 @@
 
 This is a demo React frontend for TradeXpert with a blue professional theme. Ready-to-run in VS Code.
 
+## Environment Setup
+Make sure `VITE_API_URL` is configured in Vercel Dashboard:
+- Value: `https://tradeexpert-backend.onrender.com/api`
+
 ## Quick start
 1. Unzip the project
 2. Open folder in VS Code
