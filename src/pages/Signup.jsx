@@ -64,9 +64,9 @@ export default function Signup(){
       let errorMessage = 'Signup failed. Please try again.'
       
       if (err.message.includes('timeout')) {
-        errorMessage = 'Server is starting up (free tier). Please wait a moment and try again.'
+        errorMessage = '⚠️ Backend server is not responding. The server may not be deployed yet. Please contact support or check deployment status.'
       } else if (err.message.includes('Network error')) {
-        errorMessage = 'Cannot reach server. Please check your internet connection.'
+        errorMessage = 'Cannot reach server. Please check your internet connection or contact support.'
       } else if (err.response?.data?.message) {
         errorMessage = err.response.data.message
       } else if (err.message) {
@@ -75,7 +75,7 @@ export default function Signup(){
       
       toast.error(errorMessage, { 
         id: loadingToast,
-        duration: 5000 
+        duration: 8000 
       })
     } finally {
       setLoading(false)
