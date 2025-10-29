@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { TrendingUp, CandlestickChart, ZoomIn, ZoomOut, BarChart3, Activity, BarChart2 } from 'lucide-react'
 
+// Get API URL from environment
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+
 export default function ChartView({ series, selected }) {
   const chartRef = useRef(null)
   const [chartType, setChartType] = useState('line')
@@ -39,14 +42,14 @@ export default function ChartView({ series, selected }) {
         const range = rangeMap[timeframe]
         const interval = intervalMap[timeframe]
         
+        // Use backend proxy to avoid CORS issues
         const response = await fetch(
-          `https://query2.finance.yahoo.com/v8/finance/chart/${selected.symbol}?interval=${interval}&range=${range}`,
-          {
-            headers: {
-              'User-Agent': 'Mozilla/5.0'
-            }
-          }
+          `${API_URL}/stocks/historical?symbol=${selected.symbol}&interval=${interval}&range=${range}`
         )
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
         
         const data = await response.json()
         
