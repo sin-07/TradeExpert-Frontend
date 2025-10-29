@@ -46,7 +46,14 @@ export default function Signup(){
       toast.loading('Creating your account...', { id: loadingToast })
       const result = await api.signup(name, email, password)
       console.log('Signup successful:', result)
-      toast.success('Account created! Please check your email for OTP.', { id: loadingToast })
+      
+      // Show success message with info about OTP delivery
+      const isDev = window.location.hostname === 'localhost'
+      const successMsg = isDev 
+        ? 'Account created! Check your backend console/terminal for the OTP code.'
+        : 'Account created! Check server logs for OTP or contact admin.'
+      
+      toast.success(successMsg, { id: loadingToast, duration: 5000 })
       navigate('/verify-otp', { state: { email } })
     } catch (err) {
       console.error('Signup error:', err)
