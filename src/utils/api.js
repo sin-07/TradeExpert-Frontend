@@ -1,6 +1,28 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const LEGACY_PROD_API_URL = 'https://tradeexpert-backend.onrender.com/api'
+const CURRENT_PROD_API_URL = 'https://tradeexpert-backend-1.onrender.com/api'
+const LOCAL_DEV_API_URL = 'http://localhost:5000/api'
+
+const resolvedApiUrl = (() => {
+  const envUrl = import.meta.env.VITE_API_URL
+
+  if (envUrl && envUrl !== LEGACY_PROD_API_URL) {
+    return envUrl
+  }
+
+  if (import.meta.env.PROD) {
+    console.warn(
+      'Detected legacy or missing API URL; falling back to the current production backend:',
+      CURRENT_PROD_API_URL
+    )
+    return CURRENT_PROD_API_URL
+  }
+
+  return LOCAL_DEV_API_URL
+})()
+
+const API_URL = resolvedApiUrl
 
 console.log('API URL configured as:', API_URL)
 

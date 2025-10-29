@@ -28,7 +28,7 @@ export default function EnvTest() {
           
           <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded">
             <p className="font-semibold">Expected Value:</p>
-            <p className="text-sm font-mono">https://tradeexpert-backend.onrender.com/api</p>
+            <p className="text-sm font-mono">https://tradeexpert-backend-1.onrender.com/api</p>
           </div>
           
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded">
