@@ -10,6 +10,10 @@ import OrderPanel from '../components/Trading/OrderPanel'
 import OrdersTable from '../components/Trading/OrdersTable'
 import PositionsTable from '../components/Trading/PositionsTable'
 import useIndianStockPrices from '../hooks/useIndianStockPrices'
+import useCryptoPrices from '../hooks/useCryptoPrices'
+
+// Get API URL from environment
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const generatePriceSeries = () => {
   const series = []
@@ -25,14 +29,42 @@ const generatePriceSeries = () => {
 export default function Dashboard(){
   const { user, isAuthenticated } = useAuth()
   
-  // Only Indian market data
-  const [indianSymbols, setIndianSymbols] = useState(['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS', 'HINDUNILVR.NS'])
+  // Market tabs
+  const [activeMarket, setActiveMarket] = useState('indian') // 'indian', 'us', 'crypto'
   
-  // Real-time data hook for Indian stocks only
+  // Indian stocks
+  const [indianSymbols, setIndianSymbols] = useState(['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS', 'HINDUNILVR.NS'])
   const indianData = useIndianStockPrices(indianSymbols)
   
-  // Use Indian data source
-  const { prices, series, loading } = indianData
+  // US stocks
+  const [usSymbols, setUsSymbols] = useState(['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA'])
+  const [usPrices, setUsPrices] = useState({})
+  const [usSeries, setUsSeries] = useState([])
+  const [usLoading, setUsLoading] = useState(true)
+  
+  // Cryptocurrency
+  const [cryptoSymbols, setCryptoSymbols] = useState(['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT'])
+  const cryptoData = useCryptoPrices(cryptoSymbols)
+  
+  // Current active data based on market
+  const getCurrentData = () => {
+    if (activeMarket === 'indian') {
+      return { prices: indianData.prices, series: indianData.series, loading: indianData.loading }
+    } else if (activeMarket === 'us') {
+      return { prices: usPrices, series: usSeries, loading: usLoading }
+    } else {
+      return { prices: cryptoData.prices, series: cryptoData.series, loading: false }
+    }
+  }
+  
+  const { prices, series, loading } = getCurrentData()
+  
+  // Get current symbols based on active market
+  const getCurrentSymbols = () => {
+    if (activeMarket === 'indian') return indianSymbols
+    if (activeMarket === 'us') return usSymbols
+    return cryptoSymbols
+  }
   
   // Initialize watchlist from real-time data
   const [watchlist, setWatchlist] = useState([])
@@ -58,7 +90,7 @@ export default function Dashboard(){
 
     setSearching(true)
     try {
-      const response = await fetch(`http://localhost:5000/api/search/search?query=${encodeURIComponent(query)}`)
+      const response = await fetch(`${API_URL}/search/search?query=${encodeURIComponent(query)}`)
       const data = await response.json()
       setSearchResults(data.results || [])
     } catch (error) {
@@ -79,28 +111,97 @@ export default function Dashboard(){
 
   // Function to add stock to watchlist
   const handleAddStock = (symbol) => {
-    if (!indianSymbols.includes(symbol)) {
+    if (activeMarket === 'indian' && !indianSymbols.includes(symbol)) {
       setIndianSymbols(prev => [...prev, symbol])
+    } else if (activeMarket === 'us' && !usSymbols.includes(symbol)) {
+      setUsSymbols(prev => [...prev, symbol])
+    } else if (activeMarket === 'crypto' && !cryptoSymbols.includes(symbol)) {
+      setCryptoSymbols(prev => [...prev, symbol])
     }
   }
+
+  // Fetch US stocks prices
+  const fetchUSStocks = async () => {
+    if (usSymbols.length === 0) return
+    
+    try {
+      setUsLoading(true)
+      const symbolsQuery = usSymbols.join(',')
+      const response = await fetch(`${API_URL}/stocks/us-stocks?symbols=${symbolsQuery}`)
+      
+      if (!response.ok) throw new Error('Failed to fetch US stocks')
+      
+      const data = await response.json()
+      
+      if (data.quoteResponse && data.quoteResponse.result) {
+        const newPrices = {}
+        
+        data.quoteResponse.result.forEach(quote => {
+          const price = quote.regularMarketPrice || quote.previousClose || 0
+          const change = quote.regularMarketChangePercent || 0
+          
+          newPrices[quote.symbol] = {
+            price: price.toFixed(2),
+            change: change.toFixed(2),
+            high: (quote.regularMarketDayHigh || price).toFixed(2),
+            low: (quote.regularMarketDayLow || price).toFixed(2),
+            open: (quote.regularMarketOpen || price).toFixed(2),
+            previousClose: (quote.previousClose || price).toFixed(2),
+            volume: quote.regularMarketVolume || 0,
+            shortName: quote.shortName || quote.symbol
+          }
+        })
+        
+        setUsPrices(newPrices)
+        
+        // Update series for first symbol
+        if (newPrices[usSymbols[0]]) {
+          setUsSeries(prev => {
+            const newPoint = {
+              time: new Date().toLocaleTimeString(),
+              price: parseFloat(newPrices[usSymbols[0]].price)
+            }
+            const updated = [...prev, newPoint]
+            return updated.slice(-50)
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching US stocks:', error)
+    } finally {
+      setUsLoading(false)
+    }
+  }
+
+  // Fetch US stocks on mount and every 5 seconds
+  useEffect(() => {
+    if (activeMarket === 'us') {
+      fetchUSStocks()
+      const interval = setInterval(fetchUSStocks, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [usSymbols.join(','), activeMarket])
 
   // Update watchlist when prices change
   useEffect(() => {
     if (Object.keys(prices).length > 0) {
-      const newWatchlist = indianSymbols.map(symbol => ({
+      const currentSymbols = getCurrentSymbols()
+      const newWatchlist = currentSymbols.map(symbol => ({
         symbol,
-        name: prices[symbol]?.shortName || symbol.replace('.NS', '').replace('.BO', ''),
+        name: prices[symbol]?.shortName || symbol.replace('.NS', '').replace('.BO', '').replace('USDT', ''),
         ltp: parseFloat(prices[symbol]?.price || 0),
         change: parseFloat(prices[symbol]?.change || 0)
       }))
       setWatchlist(newWatchlist)
       
-      // Set selected if not already set
-      if (!selected && newWatchlist.length > 0) {
-        setSelected(newWatchlist[0])
+      // Set selected if not already set or market changed
+      if (!selected || !currentSymbols.includes(selected.symbol)) {
+        if (newWatchlist.length > 0) {
+          setSelected(newWatchlist[0])
+        }
       }
     }
-  }, [prices])
+  }, [prices, activeMarket])
 
   // Update selected symbol price
   useEffect(() => {
@@ -212,13 +313,53 @@ export default function Dashboard(){
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
               >
                 <Search size={18} />
-                <span className="text-sm font-medium">Search Stocks</span>
+                <span className="text-sm font-medium">Search</span>
               </motion.button>
               <div className="flex items-center gap-2">
                 <Clock size={16} className="text-slate-400" />
                 <span className="text-xs md:text-sm text-slate-500">{new Date().toLocaleTimeString()}</span>
               </div>
             </div>
+          </div>
+
+          {/* Market Tabs */}
+          <div className="flex gap-2 mb-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveMarket('indian')}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeMarket === 'indian'
+                  ? 'bg-gradient-to-r from-orange-500 to-green-500 text-white shadow-lg'
+                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+              }`}
+            >
+              🇮🇳 Indian Stocks
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveMarket('us')}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeMarket === 'us'
+                  ? 'bg-gradient-to-r from-blue-600 to-red-600 text-white shadow-lg'
+                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+              }`}
+            >
+              🇺🇸 US Stocks
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveMarket('crypto')}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeMarket === 'crypto'
+                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg'
+                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+              }`}
+            >
+              ₿ Crypto
+            </motion.button>
           </div>
 
           {/* Search Bar */}
@@ -236,7 +377,13 @@ export default function Dashboard(){
                     <Search className="w-5 h-5 text-slate-400" />
                     <input
                       type="text"
-                      placeholder="Search for stocks (e.g., RELIANCE, TCS, INFY)..."
+                      placeholder={
+                        activeMarket === 'indian' 
+                          ? "Search Indian stocks (e.g., RELIANCE, TCS, INFY)..."
+                          : activeMarket === 'us'
+                          ? "Search US stocks (e.g., AAPL, TSLA, GOOGL)..."
+                          : "Search crypto (e.g., BTCUSDT, ETHUSDT)..."
+                      }
                       value={search}
                       onChange={(e) => handleSearch(e.target.value)}
                       className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"

@@ -2,6 +2,9 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowUpRight, ArrowDownRight, Search, Plus, X, TrendingUp } from 'lucide-react'
 
+// Get API URL from environment
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+
 export default function Watchlist({ watchlist, onSelect, selected, onAddStock }) {
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -23,7 +26,7 @@ export default function Watchlist({ watchlist, onSelect, selected, onAddStock })
 
     setSearching(true)
     try {
-      const response = await fetch(`http://localhost:5000/api/search/search?query=${encodeURIComponent(query)}`)
+      const response = await fetch(`${API_URL}/search/search?query=${encodeURIComponent(query)}`)
       const data = await response.json()
       setSearchResults(data.results || [])
     } catch (error) {

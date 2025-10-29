@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 
+// Get API URL from environment
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+
 /**
  * Real-time Indian Stock Prices (NSE/BSE)
  * 
@@ -49,7 +52,7 @@ export default function useIndianStockPrices(symbols = [
       console.log('Fetching Indian stocks from backend:', symbolsQuery)
       
       const response = await fetch(
-        `http://localhost:5000/api/stocks/indian-stocks?symbols=${symbolsQuery}`
+        `${API_URL}/stocks/indian-stocks?symbols=${symbolsQuery}`
       )
       
       console.log('Response status:', response.status, response.statusText)
