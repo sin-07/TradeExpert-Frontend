@@ -1,7 +1,7 @@
 import React from 'react'
 
 export default function EnvTest() {
-  const apiUrl = import.meta.env.VITE_API_URL || 'Not set'
+  const apiUrl = import.meta.env.VITE_API_URL || 'localhost:5173'
   
   return (
     <div className="min-h-screen bg-gray-100 p-8">
