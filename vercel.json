@@ -11,11 +11,11 @@
     }
   ],
   "env": {
-  "VITE_API_URL": "https://tradeexpert-backend-1.onrender.com/api"
+    "VITE_API_URL": "https://tradeexpert-backend-2.onrender.com/api"
   },
   "build": {
     "env": {
-  "VITE_API_URL": "https://tradeexpert-backend-1.onrender.com/api"
+      "VITE_API_URL": "https://tradeexpert-backend-2.onrender.com/api"
     }
   }
 }
