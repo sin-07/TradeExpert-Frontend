@@ -636,10 +636,10 @@ export default function Dashboard(){
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="col-span-1 lg:col-span-12 bg-white p-4 md:p-6 rounded-xl shadow-lg mt-2"
+            className="col-span-1 lg:col-span-12 mt-2"
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-              <PositionsTable positions={positions} />
+              <PositionsTable positions={positions} currentPrices={prices} />
               <OrdersTable orders={orders} />
             </div>
           </motion.section>
