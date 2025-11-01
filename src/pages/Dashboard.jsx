@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TrendingUp, TrendingDown, Activity, Wallet, BarChart3, Clock, Search, Plus, X } from 'lucide-react'
+import toast, { Toaster } from 'react-hot-toast'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import Watchlist from '../components/Trading/Watchlist'
@@ -281,21 +282,33 @@ export default function Dashboard(){
     const cost = +(unitPrice * qty).toFixed(2)
     
     if (!selected || !selected.symbol) { 
-      alert('Select a symbol first')
+      toast.error('Please select a stock first', {
+        icon: '📊',
+        duration: 3000
+      })
       return 
     }
     if (qty <= 0) { 
-      alert('Enter quantity')
+      toast.error('Please enter a valid quantity', {
+        icon: '🔢',
+        duration: 3000
+      })
       return 
     }
     if (isNaN(unitPrice) || unitPrice <= 0) { 
-      alert('Invalid price')
+      toast.error('Please enter a valid price', {
+        icon: '💰',
+        duration: 3000
+      })
       return 
     }
 
     const token = localStorage.getItem('tradexpert_token')
     if (!token) {
-      alert('Please login to place orders')
+      toast.error('Please login to place orders', {
+        icon: '🔐',
+        duration: 4000
+      })
       return
     }
 
@@ -322,7 +335,10 @@ export default function Dashboard(){
       const data = await response.json()
 
       if (!response.ok) {
-        alert(data.message || 'Failed to place order')
+        toast.error(data.message || 'Failed to place order', {
+          icon: '❌',
+          duration: 4000
+        })
         return
       }
 
@@ -349,12 +365,36 @@ export default function Dashboard(){
       // Reset order form
       setOrder({ type: order.type, side: order.side, qty: 1, price: '' })
 
-      // Show success message
-      alert(`✅ ${data.message}\n\n📧 Order confirmation has been sent to your email!`)
+      // Show success message with custom styling
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <div className="font-bold text-base">
+            {order.side === 'Buy' ? '🎉 Order Bought!' : '� Order Sold!'}
+          </div>
+          <div className="text-sm">
+            {qty} shares of {selected.symbol} at ₹{unitPrice.toFixed(2)}
+          </div>
+          <div className="text-xs text-slate-600 mt-1">
+            📧 Email confirmation sent!
+          </div>
+        </div>,
+        {
+          duration: 5000,
+          style: {
+            background: order.side === 'Buy' ? '#ecfdf5' : '#fef2f2',
+            border: order.side === 'Buy' ? '2px solid #10b981' : '2px solid #ef4444',
+            padding: '16px',
+            borderRadius: '12px'
+          }
+        }
+      )
 
     } catch (error) {
       console.error('Error placing order:', error)
-      alert('Failed to place order. Please try again.')
+      toast.error('Failed to place order. Please try again.', {
+        icon: '⚠️',
+        duration: 4000
+      })
     } finally {
       setOrderLoading(false)
     }
@@ -380,6 +420,35 @@ export default function Dashboard(){
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <Toaster 
+        position="top-right"
+        reverseOrder={false}
+        gutter={8}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#fff',
+            color: '#1e293b',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            fontSize: '14px',
+            fontWeight: '500'
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <Navbar logged={isAuthenticated} setLogged={()=>{}} />
       
       <main className="flex-1 container mx-auto px-4 md:px-6 py-4 md:py-6">
