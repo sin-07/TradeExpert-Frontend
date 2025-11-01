@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const LEGACY_PROD_API_URL = 'https://tradeexpert-backend.onrender.com/api'
-const CURRENT_PROD_API_URL = 'https://tradeexpert-backend-1.onrender.com/api'
+const CURRENT_PROD_API_URL = 'https://tradeexpert-backend-2.onrender.com/api'
 const LOCAL_DEV_API_URL = 'http://localhost:5000/api'
 
 const resolvedApiUrl = (() => {
