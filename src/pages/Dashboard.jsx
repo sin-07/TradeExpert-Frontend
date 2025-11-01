@@ -83,7 +83,7 @@ export default function Dashboard(){
   // Fetch portfolio on mount
   useEffect(() => {
     const fetchPortfolio = async () => {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('tradexpert_token')
       if (!token) return
 
       try {
@@ -109,7 +109,7 @@ export default function Dashboard(){
     }
 
     const fetchOrders = async () => {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('tradexpert_token')
       if (!token) return
 
       try {
@@ -293,7 +293,7 @@ export default function Dashboard(){
       return 
     }
 
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('tradexpert_token')
     if (!token) {
       alert('Please login to place orders')
       return
