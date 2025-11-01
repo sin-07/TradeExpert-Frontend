@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import api from '../utils/api'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import ForgotPasswordModal from '../components/ForgotPasswordModal'
+import ResetPasswordModal from '../components/ResetPasswordModal'
 
 export default function Login(){
   const [email,setEmail]=useState('')
   const [password,setPassword]=useState('')
   const [loading, setLoading] = useState(false)
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false)
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
   const navigate = useNavigate()
   const { login, isAuthenticated } = useAuth()
 
@@ -154,9 +159,13 @@ export default function Login(){
                   <input type="checkbox" className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-500" />
                   <span className="text-sm text-slate-600">Remember me</span>
                 </label>
-                <a href="#" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+                <button 
+                  type="button"
+                  onClick={() => setShowForgotPasswordModal(true)}
+                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
               
               <button 
@@ -209,6 +218,22 @@ export default function Login(){
         </div>
       </main>
       <Footer />
+      
+      {/* Modals */}
+      <ForgotPasswordModal 
+        isOpen={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)}
+        onSuccess={(email) => {
+          setResetEmail(email)
+          setShowResetPasswordModal(true)
+        }}
+      />
+      
+      <ResetPasswordModal 
+        isOpen={showResetPasswordModal}
+        onClose={() => setShowResetPasswordModal(false)}
+        email={resetEmail}
+      />
     </div>
   )
 }
