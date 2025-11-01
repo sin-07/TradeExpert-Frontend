@@ -78,6 +78,67 @@ export default function Dashboard(){
   const [orders, setOrders] = useState([])
   const [balance, setBalance] = useState(50000)
   const [todayPnL, setTodayPnL] = useState(0)
+  const [orderLoading, setOrderLoading] = useState(false)
+
+  // Fetch portfolio on mount
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      try {
+        const response = await fetch(`${API_URL}/trading/portfolio`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setBalance(data.balance || 50000)
+          setPositions(data.positions.map(pos => ({
+            symbol: pos.symbol,
+            qty: pos.quantity,
+            avg: pos.averagePrice,
+            side: pos.side
+          })) || [])
+        }
+      } catch (error) {
+        console.error('Error fetching portfolio:', error)
+      }
+    }
+
+    const fetchOrders = async () => {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      try {
+        const response = await fetch(`${API_URL}/trading/orders?limit=50`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setOrders(data.orders.map(o => ({
+            id: o._id,
+            symbol: o.symbol,
+            side: o.side,
+            qty: o.quantity,
+            price: o.price,
+            status: o.status,
+            time: new Date(o.executedAt).toLocaleTimeString()
+          })) || [])
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error)
+      }
+    }
+
+    fetchPortfolio()
+    fetchOrders()
+  }, [])
 
   // Search for stocks
   const handleSearch = async (query) => {
@@ -214,61 +275,89 @@ export default function Dashboard(){
     }
   }, [prices, selected?.symbol])
 
-  const placeOrder = ()=>{
+  const placeOrder = async () => {
     const unitPrice = order.type === 'Market' || !order.price ? (selected?.ltp || 0) : parseFloat(order.price)
     const qty = Number(order.qty) || 0
     const cost = +(unitPrice * qty).toFixed(2)
-    if (!selected || !selected.symbol) { alert('Select a symbol first'); return }
-    if (qty <= 0) { alert('Enter quantity'); return }
-    if (isNaN(unitPrice) || unitPrice <= 0) { alert('Invalid price'); return }
-
-    if (order.side === 'Buy') {
-      if (balance < cost) { alert(`Insufficient funds. Required ₹${cost}, Available ₹${balance.toFixed(2)}`); return }
+    
+    if (!selected || !selected.symbol) { 
+      alert('Select a symbol first')
+      return 
+    }
+    if (qty <= 0) { 
+      alert('Enter quantity')
+      return 
+    }
+    if (isNaN(unitPrice) || unitPrice <= 0) { 
+      alert('Invalid price')
+      return 
     }
 
-    const newOrder = {
-      id: Date.now(),
-      symbol: selected.symbol,
-      side: order.side,
-      qty,
-      price: order.type === 'Market' ? 'MKT' : unitPrice,
-      status: 'Filled',
-      time: new Date().toLocaleTimeString(),
+    const token = localStorage.getItem('token')
+    if (!token) {
+      alert('Please login to place orders')
+      return
     }
-    setOrders(o=>[newOrder, ...o].slice(0,50))
 
-    if (order.side === 'Buy') {
-      setBalance(b => +((b - cost)).toFixed(2))
-      setPositions(p=>{
-        const existing = p.find(pos=>pos.symbol===selected.symbol && pos.side==='Buy')
-        if (existing) {
-          const prevCost = existing.avg * existing.qty
-          const newQty = existing.qty + qty
-          const newAvg = (prevCost + unitPrice * qty) / newQty
-          existing.qty = newQty
-          existing.avg = +newAvg.toFixed(2)
-          return [...p]
-        }
-        return [{ symbol: selected.symbol, qty, avg: +unitPrice.toFixed(2), side: 'Buy' }, ...p]
+    setOrderLoading(true)
+
+    try {
+      const response = await fetch(`${API_URL}/trading/place-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          symbol: selected.symbol,
+          stockName: selected.name,
+          orderType: order.type,
+          side: order.side,
+          quantity: qty,
+          price: unitPrice,
+          market: activeMarket
+        })
       })
-    } else {
-      setBalance(b => +((b + cost)).toFixed(2))
-      setPositions(p=>{
-        const existing = p.find(pos=>pos.symbol===selected.symbol && pos.side==='Buy')
-        if (existing) {
-          existing.qty -= qty
-          if (existing.qty <= 0) {
-            return p.filter(x=>x!==existing)
-          }
-          return [...p]
-        }
-        const sellPos = p.find(pos=>pos.symbol===selected.symbol && pos.side==='Sell')
-        if (sellPos) { sellPos.qty += qty; return [...p] }
-        return [{ symbol: selected.symbol, qty, avg: +unitPrice.toFixed(2), side: 'Sell' }, ...p]
-      })
-    }
 
-    setOrder({ type: order.type, side: order.side, qty: 1, price: '' })
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.message || 'Failed to place order')
+        return
+      }
+
+      // Update local state with server response
+      setBalance(data.portfolio.balance)
+      setPositions(data.portfolio.positions.map(pos => ({
+        symbol: pos.symbol,
+        qty: pos.quantity,
+        avg: pos.averagePrice,
+        side: pos.side
+      })))
+
+      // Add order to orders list
+      setOrders(prev => [{
+        id: data.order._id,
+        symbol: data.order.symbol,
+        side: data.order.side,
+        qty: data.order.quantity,
+        price: data.order.price,
+        status: data.order.status,
+        time: new Date(data.order.executedAt).toLocaleTimeString()
+      }, ...prev].slice(0, 50))
+
+      // Reset order form
+      setOrder({ type: order.type, side: order.side, qty: 1, price: '' })
+
+      // Show success message
+      alert(`✅ ${data.message}\n\n📧 Order confirmation has been sent to your email!`)
+
+    } catch (error) {
+      console.error('Error placing order:', error)
+      alert('Failed to place order. Please try again.')
+    } finally {
+      setOrderLoading(false)
+    }
   }
 
   // Calculate portfolio stats
@@ -541,7 +630,7 @@ export default function Dashboard(){
         >
           <Watchlist watchlist={watchlist} onSelect={setSelected} selected={selected} onAddStock={handleAddStock} />
           <ChartView series={series} selected={selected} />
-          <OrderPanel order={order} setOrder={setOrder} placeOrder={placeOrder} balance={balance} />
+          <OrderPanel order={order} setOrder={setOrder} placeOrder={placeOrder} balance={balance} loading={orderLoading} />
           
           <motion.section 
             initial={{ opacity: 0 }}
