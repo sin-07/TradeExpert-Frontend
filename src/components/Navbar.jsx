@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingUp, LogOut, LayoutDashboard, Menu, X } from 'lucide-react'
+import { TrendingUp, LogOut, LayoutDashboard, Menu, X, MapPin } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import LogoutModal from './LogoutModal'
 
@@ -12,6 +12,48 @@ export default function Navbar({ logged, setLogged }){
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [userLocation, setUserLocation] = useState(null)
+  const [locationLoading, setLocationLoading] = useState(true)
+  
+  // Fetch user location
+  useEffect(() => {
+    const getLocation = () => {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords
+            
+            // Reverse geocoding to get city name
+            try {
+              const response = await fetch(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+              )
+              const data = await response.json()
+              setUserLocation({
+                city: data.city || data.locality || 'Unknown',
+                country: data.countryName || 'Unknown',
+              })
+            } catch (error) {
+              console.error('Error fetching location:', error)
+              setUserLocation({ city: 'Unknown', country: 'Unknown' })
+            } finally {
+              setLocationLoading(false)
+            }
+          },
+          (error) => {
+            console.error('Geolocation error:', error)
+            setUserLocation({ city: 'Location Off', country: '' })
+            setLocationLoading(false)
+          }
+        )
+      } else {
+        setUserLocation({ city: 'Not Supported', country: '' })
+        setLocationLoading(false)
+      }
+    }
+    
+    getLocation()
+  }, [])
   
   const handleLogoutClick = () => {
     setShowLogoutModal(true)
@@ -66,28 +108,55 @@ export default function Navbar({ logged, setLogged }){
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-6">
+            {/* Location Display */}
+            {!locationLoading && userLocation && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
+                <MapPin className="w-4 h-4 text-indigo-600" />
+                <span className="text-sm font-medium text-slate-700">
+                  {userLocation.city}
+                  {userLocation.country && userLocation.country !== 'Unknown' && 
+                    `, ${userLocation.country}`
+                  }
+                </span>
+              </div>
+            )}
+            
             <Link 
               to='/' 
-              className={`text-sm font-medium transition-colors ${
+              className={`relative px-4 py-2 text-sm font-medium transition-all rounded-lg ${
                 isActive('/') 
-                  ? 'text-indigo-600' 
-                  : 'text-slate-600 hover:text-indigo-600'
+                  ? 'text-indigo-600 bg-indigo-50' 
+                  : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
               }`}
             >
               Home
+              {isActive('/') && (
+                <motion.div
+                  layoutId="navbar-indicator"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
             </Link>
             
             {isLogged && (
               <Link 
                 to='/dashboard' 
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all rounded-lg ${
                   isActive('/dashboard') 
-                    ? 'text-indigo-600' 
-                    : 'text-slate-600 hover:text-indigo-600'
+                    ? 'text-indigo-600 bg-indigo-50' 
+                    : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
                 Dashboard
+                {isActive('/dashboard') && (
+                  <motion.div
+                    layoutId="navbar-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
               </Link>
             )}
             
@@ -154,12 +223,25 @@ export default function Navbar({ logged, setLogged }){
                   </div>
                 )}
                 
+                {/* Mobile Location Display */}
+                {!locationLoading && userLocation && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-lg mx-0">
+                    <MapPin className="w-4 h-4 text-indigo-600" />
+                    <span className="text-sm font-medium text-slate-700">
+                      {userLocation.city}
+                      {userLocation.country && userLocation.country !== 'Unknown' && 
+                        `, ${userLocation.country}`
+                      }
+                    </span>
+                  </div>
+                )}
+                
                 <Link 
                   to='/' 
                   onClick={closeMobileMenu}
-                  className={`block px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`relative block px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive('/') 
-                      ? 'bg-indigo-50 text-indigo-600' 
+                      ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600' 
                       : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
@@ -170,9 +252,9 @@ export default function Navbar({ logged, setLogged }){
                   <Link 
                     to='/dashboard' 
                     onClick={closeMobileMenu}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive('/dashboard') 
-                        ? 'bg-indigo-50 text-indigo-600' 
+                        ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600' 
                         : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
