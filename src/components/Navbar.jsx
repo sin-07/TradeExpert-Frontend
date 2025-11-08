@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingUp, LogOut, LayoutDashboard, Menu, X, MapPin } from 'lucide-react'
+import { TrendingUp, LogOut, LayoutDashboard, Menu, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import LogoutModal from './LogoutModal'
 
@@ -12,48 +12,6 @@ export default function Navbar({ logged, setLogged }){
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const [userLocation, setUserLocation] = useState(null)
-  const [locationLoading, setLocationLoading] = useState(true)
-  
-  // Fetch user location
-  useEffect(() => {
-    const getLocation = () => {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude } = position.coords
-            
-            // Reverse geocoding to get city name
-            try {
-              const response = await fetch(
-                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-              )
-              const data = await response.json()
-              setUserLocation({
-                city: data.city || data.locality || 'Unknown',
-                country: data.countryName || 'Unknown',
-              })
-            } catch (error) {
-              console.error('Error fetching location:', error)
-              setUserLocation({ city: 'Unknown', country: 'Unknown' })
-            } finally {
-              setLocationLoading(false)
-            }
-          },
-          (error) => {
-            console.error('Geolocation error:', error)
-            setUserLocation({ city: 'Location Off', country: '' })
-            setLocationLoading(false)
-          }
-        )
-      } else {
-        setUserLocation({ city: 'Not Supported', country: '' })
-        setLocationLoading(false)
-      }
-    }
-    
-    getLocation()
-  }, [])
   
   const handleLogoutClick = () => {
     setShowLogoutModal(true)
@@ -108,19 +66,6 @@ export default function Navbar({ logged, setLogged }){
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-6">
-            {/* Location Display */}
-            {!locationLoading && userLocation && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
-                <MapPin className="w-4 h-4 text-indigo-600" />
-                <span className="text-sm font-medium text-slate-700">
-                  {userLocation.city}
-                  {userLocation.country && userLocation.country !== 'Unknown' && 
-                    `, ${userLocation.country}`
-                  }
-                </span>
-              </div>
-            )}
-            
             <Link 
               to='/' 
               className={`relative px-4 py-2 text-sm font-medium transition-all rounded-lg ${
@@ -220,19 +165,6 @@ export default function Navbar({ logged, setLogged }){
                     <p className="text-xs text-slate-500">Logged in as</p>
                     <p className="font-semibold text-slate-900">{user.name}</p>
                     <p className="text-sm text-slate-600">{user.email}</p>
-                  </div>
-                )}
-                
-                {/* Mobile Location Display */}
-                {!locationLoading && userLocation && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-lg mx-0">
-                    <MapPin className="w-4 h-4 text-indigo-600" />
-                    <span className="text-sm font-medium text-slate-700">
-                      {userLocation.city}
-                      {userLocation.country && userLocation.country !== 'Unknown' && 
-                        `, ${userLocation.country}`
-                      }
-                    </span>
                   </div>
                 )}
                 
