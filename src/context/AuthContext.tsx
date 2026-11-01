@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import toast from 'react-hot-toast';
 import api from '../lib/api';
 
-const AuthContext = createContext();
+const AuthContext = createContext<any>(null);
 
 export function useAuth() {
   const context = useContext(AuthContext);

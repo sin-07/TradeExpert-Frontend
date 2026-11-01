@@ -2,12 +2,18 @@ import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/context/AuthContext';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'TradeXpert | Institutional Paper Trading & Analytics Terminal',
   description: 'Trade NSE stocks, US equities, and crypto with real-time streaming market data, technical charts, live order execution, and paper portfolio trading.',
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className="dark">
       <body className="bg-[#070b12] text-slate-100 antialiased min-h-screen flex flex-col selection:bg-cyan-500 selection:text-black">
