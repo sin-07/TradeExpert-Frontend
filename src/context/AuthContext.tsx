@@ -6,10 +6,20 @@ import api from '../lib/api';
 
 const AuthContext = createContext<any>(null);
 
+const defaultAuthValue = {
+  user: null,
+  loading: false,
+  isAuthenticated: false,
+  signup: async () => ({}),
+  login: async () => ({}),
+  demoLogin: async () => ({}),
+  logout: () => {},
+};
+
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    return defaultAuthValue;
   }
   return context;
 }
