@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Send, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
+import useScrollLock from '@/hooks/useScrollLock';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -12,6 +13,9 @@ export default function ForgotPasswordModal({ isOpen, onClose, onSuccess }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Freeze background scrolling when modal is open
+  useScrollLock(isOpen);
 
   useEffect(() => {
     setMounted(true);
@@ -63,7 +67,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onSuccess }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9998]"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9998] touch-none overscroll-contain select-none"
             onClick={loading ? undefined : onClose}
           />
 

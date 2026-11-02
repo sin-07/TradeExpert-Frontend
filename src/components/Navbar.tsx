@@ -23,6 +23,7 @@ import {
 import toast from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import LogoutModal from '@/components/LogoutModal';
+import useScrollLock from '@/hooks/useScrollLock';
 import api from '@/lib/api';
 
 // Live Ticker Tape Data
@@ -48,6 +49,9 @@ export default function Navbar() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [virtualBalance, setVirtualBalance] = useState(null);
   const [mounted, setMounted] = useState(false);
+
+  // Freeze background scrolling when sidebar is open
+  useScrollLock(mobileMenuOpen);
 
   // GSAP Animation Refs
   const line1Ref = useRef(null);
@@ -105,10 +109,6 @@ export default function Navbar() {
     if (isAnimatingRef.current) return;
     isAnimatingRef.current = true;
     setMobileMenuOpen(true);
-
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = 'hidden';
-    }
 
     // Morph hamburger icon to X
     if (line1Ref.current && line2Ref.current && line3Ref.current) {
@@ -189,10 +189,6 @@ export default function Navbar() {
   const closeMobileMenu = useCallback(() => {
     if (isAnimatingRef.current) return;
     isAnimatingRef.current = true;
-
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = '';
-    }
 
     // Morph hamburger icon back
     if (line1Ref.current && line2Ref.current && line3Ref.current) {
@@ -442,7 +438,7 @@ export default function Navbar() {
             <div
               ref={backdropRef}
               onClick={closeMobileMenu}
-              className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9998] hidden"
+              className="fixed inset-0 bg-black/75 backdrop-blur-md z-[9998] hidden touch-none overscroll-contain select-none"
               style={{ opacity: 0 }}
             />
 

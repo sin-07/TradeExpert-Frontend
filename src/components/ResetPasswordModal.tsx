@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, KeyRound, CheckCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import useScrollLock from '@/hooks/useScrollLock';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -16,6 +17,9 @@ export default function ResetPasswordModal({ isOpen, onClose, email }) {
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  // Freeze background scrolling when modal is open
+  useScrollLock(isOpen);
 
   useEffect(() => {
     setMounted(true);
@@ -81,7 +85,7 @@ export default function ResetPasswordModal({ isOpen, onClose, email }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9998]"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9998] touch-none overscroll-contain select-none"
             onClick={loading ? undefined : onClose}
           />
 

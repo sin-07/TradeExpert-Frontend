@@ -28,6 +28,13 @@ body {
   overflow-x: hidden;
 }
 
+/* Complete background freeze when modal/sidebar popup is active */
+body[style*="overflow: hidden"] {
+  touch-action: none;
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior: contain;
+}
+
 /* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

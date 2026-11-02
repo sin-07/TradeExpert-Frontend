@@ -4,9 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, ShieldAlert } from 'lucide-react';
+import useScrollLock from '@/hooks/useScrollLock';
 
 export default function LogoutModal({ isOpen, onClose, onConfirm, isLoggingOut }) {
   const [mounted, setMounted] = useState(false);
+
+  // Freeze background scrolling when modal is open
+  useScrollLock(isOpen);
 
   useEffect(() => {
     setMounted(true);
@@ -24,7 +28,7 @@ export default function LogoutModal({ isOpen, onClose, onConfirm, isLoggingOut }
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9998]"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9998] touch-none overscroll-contain select-none"
             onClick={isLoggingOut ? undefined : onClose}
           />
 
