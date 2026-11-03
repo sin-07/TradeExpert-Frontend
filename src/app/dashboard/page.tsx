@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import gsap from 'gsap';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -81,6 +82,70 @@ export default function DashboardPage() {
   const [balance, setBalance] = useState(50000);
   const [todayPnL, setTodayPnL] = useState(0);
   const [orderLoading, setOrderLoading] = useState(false);
+
+  // GSAP Left-Right Animation Layout Refs
+  const headerLeftRef = useRef(null);
+  const headerRightRef = useRef(null);
+  const metricsGridRef = useRef(null);
+  const terminalGridRef = useRef(null);
+  const bottomGridRef = useRef(null);
+
+  // Trigger GSAP Left-Right Animations after mount
+  useEffect(() => {
+    if (headerLeftRef.current && headerRightRef.current) {
+      gsap.fromTo(
+        headerLeftRef.current,
+        { opacity: 0, x: -50 },
+        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out' }
+      );
+      gsap.fromTo(
+        headerRightRef.current,
+        { opacity: 0, x: 50 },
+        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out' }
+      );
+    }
+
+    if (metricsGridRef.current) {
+      gsap.fromTo(
+        metricsGridRef.current.children,
+        { opacity: 0, x: -40 },
+        { opacity: 1, x: 0, duration: 0.6, stagger: 0.08, ease: 'power3.out', delay: 0.15 }
+      );
+    }
+
+    if (terminalGridRef.current && terminalGridRef.current.children.length >= 3) {
+      const [watchlistEl, chartEl, orderEl] = terminalGridRef.current.children;
+      gsap.fromTo(
+        watchlistEl,
+        { opacity: 0, x: -60 },
+        { opacity: 1, x: 0, duration: 0.75, ease: 'power3.out', delay: 0.25 }
+      );
+      gsap.fromTo(
+        chartEl,
+        { opacity: 0, scale: 0.96 },
+        { opacity: 1, scale: 1, duration: 0.75, ease: 'power3.out', delay: 0.3 }
+      );
+      gsap.fromTo(
+        orderEl,
+        { opacity: 0, x: 60 },
+        { opacity: 1, x: 0, duration: 0.75, ease: 'power3.out', delay: 0.35 }
+      );
+    }
+
+    if (bottomGridRef.current && bottomGridRef.current.children.length >= 2) {
+      const [posEl, ordEl] = bottomGridRef.current.children;
+      gsap.fromTo(
+        posEl,
+        { opacity: 0, x: -50 },
+        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out', delay: 0.45 }
+      );
+      gsap.fromTo(
+        ordEl,
+        { opacity: 0, x: 50 },
+        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out', delay: 0.45 }
+      );
+    }
+  }, []);
 
   // Fetch Portfolio & Positions
   const fetchPortfolio = useCallback(async () => {
@@ -298,7 +363,7 @@ export default function DashboardPage() {
         {/* Market Category Selector & Summary Strip */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           {/* Segment Selector */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#0b101b] rounded-2xl border border-white/10 w-fit">
+          <div ref={headerLeftRef} className="flex items-center gap-1.5 p-1 bg-[#0b101b] rounded-2xl border border-white/10 w-fit">
             <button
               onClick={() => setActiveMarket('indian')}
               className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all flex items-center gap-2 ${
@@ -337,7 +402,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center gap-3">
+          <div ref={headerRightRef} className="flex items-center gap-3">
             <button
               onClick={handleDeposit}
               className="flex items-center gap-2 px-3.5 py-2 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 text-xs font-bold rounded-xl transition-all shadow-sm"
@@ -349,7 +414,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 4 Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div ref={metricsGridRef} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-4 rounded-2xl bg-[#0b101b] border border-white/10 shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
             <div className="flex justify-between items-center text-slate-400 text-xs font-medium mb-1">
@@ -413,7 +478,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Core Trading Terminal (Watchlist, ChartView, OrderPanel) */}
-        <div className="grid grid-cols-12 gap-4">
+        <div ref={terminalGridRef} className="grid grid-cols-12 gap-4">
           <Watchlist
             watchlist={watchlist}
             onSelect={setSelected}
@@ -435,7 +500,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Lower Terminal: Positions and Orders History */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
+        <div ref={bottomGridRef} className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
           <PositionsTable
             positions={positions}
             currentPrices={prices}

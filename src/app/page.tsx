@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import gsap from 'gsap';
 import { 
   TrendingUp, 
   ShieldCheck, 
@@ -29,6 +30,20 @@ export default function Home() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
+  // GSAP Left-Right Animation Refs
+  const heroBadgeRef = useRef(null);
+  const heroTitleRef = useRef(null);
+  const heroSubtitleRef = useRef(null);
+  const heroActionsRef = useRef(null);
+  const heroStatsRef = useRef(null);
+  const radarLeftRef = useRef(null);
+  const radarRightRef = useRef(null);
+  const stockGridRef = useRef(null);
+  const featureHeaderRef = useRef(null);
+  const featureCard1Ref = useRef(null);
+  const featureCard2Ref = useRef(null);
+  const featureCard3Ref = useRef(null);
+
   // Top Indian stocks for real-time ticker
   const [niftyStocks] = useState([
     'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS',
@@ -53,6 +68,81 @@ export default function Home() {
     }
   }, [prices, niftyStocks]);
 
+  // GSAP Left-to-Right & Right-to-Left Entrance Animations
+  useEffect(() => {
+    // 1. Hero Left-to-Right reveal
+    if (heroBadgeRef.current && heroTitleRef.current && heroSubtitleRef.current) {
+      gsap.fromTo(
+        [heroBadgeRef.current, heroTitleRef.current, heroSubtitleRef.current],
+        { opacity: 0, x: -60 },
+        { opacity: 1, x: 0, duration: 0.8, stagger: 0.12, ease: 'power3.out' }
+      );
+    }
+
+    // 2. Hero Right-to-Left reveal
+    if (heroActionsRef.current && heroStatsRef.current) {
+      gsap.fromTo(
+        [heroActionsRef.current, heroStatsRef.current],
+        { opacity: 0, x: 60 },
+        { opacity: 1, x: 0, duration: 0.8, stagger: 0.15, ease: 'power3.out', delay: 0.2 }
+      );
+    }
+
+    // 3. Live Radar Left-Right Split
+    if (radarLeftRef.current && radarRightRef.current) {
+      gsap.fromTo(
+        radarLeftRef.current,
+        { opacity: 0, x: -50 },
+        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out', delay: 0.3 }
+      );
+      gsap.fromTo(
+        radarRightRef.current,
+        { opacity: 0, x: 50 },
+        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out', delay: 0.3 }
+      );
+    }
+
+    // 4. Feature Cards: Left Card from Left, Center from Bottom, Right Card from Right
+    if (featureCard1Ref.current && featureCard2Ref.current && featureCard3Ref.current) {
+      gsap.fromTo(
+        featureCard1Ref.current,
+        { opacity: 0, x: -70 },
+        { opacity: 1, x: 0, duration: 0.85, ease: 'power3.out', delay: 0.35 }
+      );
+      gsap.fromTo(
+        featureCard2Ref.current,
+        { opacity: 0, y: 50 },
+        { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out', delay: 0.45 }
+      );
+      gsap.fromTo(
+        featureCard3Ref.current,
+        { opacity: 0, x: 70 },
+        { opacity: 1, x: 0, duration: 0.85, ease: 'power3.out', delay: 0.55 }
+      );
+    }
+  }, []);
+
+  // Alternating Left-Right Stagger for Live Stock Cards
+  useEffect(() => {
+    if (stockGridRef.current && stockList.length > 0) {
+      const cards = stockGridRef.current.children;
+      gsap.fromTo(
+        cards,
+        {
+          opacity: 0,
+          x: (i) => (i % 2 === 0 ? -40 : 40),
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.6,
+          stagger: 0.05,
+          ease: 'power3.out',
+        }
+      );
+    }
+  }, [stockList]);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#070b12] text-slate-100 selection:bg-cyan-500 selection:text-black">
       <Navbar />
@@ -66,10 +156,9 @@ export default function Home() {
 
           <div className="container mx-auto px-4 sm:px-6 relative z-10">
             <div className="max-w-4xl mx-auto text-center space-y-6">
-              {/* Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: -15 }}
-                animate={{ opacity: 1, y: 0 }}
+              {/* Badge (Slides in from Left) */}
+              <div
+                ref={heroBadgeRef}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-900/90 border border-white/10 shadow-xl"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -79,37 +168,31 @@ export default function Home() {
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 uppercase">
                   Zero Risk
                 </span>
-              </motion.div>
+              </div>
 
-              {/* Title */}
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
+              {/* Title (Slides in from Left) */}
+              <h1
+                ref={heroTitleRef}
                 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.08] text-white"
               >
                 Next-Gen Trading Terminal For{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-300">
                   Modern Traders
                 </span>
-              </motion.h1>
+              </h1>
 
-              {/* Subtitle */}
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
+              {/* Subtitle (Slides in from Left) */}
+              <p
+                ref={heroSubtitleRef}
                 className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed"
               >
                 Master NSE Equities, US Tech Stocks, and Cryptocurrencies with real-time feeds,
                 sub-100ms order simulation, and ₹50,000 starting virtual balance.
-              </motion.p>
+              </p>
 
-              {/* Action Buttons */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+              {/* Action Buttons (Slide in from Right) */}
+              <div
+                ref={heroActionsRef}
                 className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4"
               >
                 <Link
@@ -127,10 +210,13 @@ export default function Home() {
                   <span>Sign In to Account</span>
                   <ArrowUpRight size={16} />
                 </Link>
-              </motion.div>
+              </div>
 
-              {/* Key Platform Stats */}
-              <div className="grid grid-cols-3 gap-4 pt-10 border-t border-white/5 max-w-2xl mx-auto">
+              {/* Key Platform Stats (Slide in from Right) */}
+              <div
+                ref={heroStatsRef}
+                className="grid grid-cols-3 gap-4 pt-10 border-t border-white/5 max-w-2xl mx-auto"
+              >
                 <div className="text-center">
                   <p className="text-xl sm:text-2xl font-black font-mono text-white">₹50,000</p>
                   <p className="text-xs text-slate-500 mt-0.5">Virtual Capital</p>
@@ -151,7 +237,7 @@ export default function Home() {
         {/* Live Top Movers Ticker Grid */}
         <section className="py-16 container mx-auto px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
-            <div>
+            <div ref={radarLeftRef}>
               <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono uppercase font-bold tracking-wider mb-1">
                 <Activity size={14} />
                 Live Market Radar
@@ -161,12 +247,14 @@ export default function Home() {
               </h2>
             </div>
 
-            <Link
-              href="/dashboard"
-              className="text-xs font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
-            >
-              Open Full Terminal →
-            </Link>
+            <div ref={radarRightRef}>
+              <Link
+                href="/dashboard"
+                className="text-xs font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+              >
+                Open Full Terminal →
+              </Link>
+            </div>
           </div>
 
           {loading && stockList.length === 0 ? (
@@ -176,7 +264,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            <div ref={stockGridRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
               {stockList.slice(0, 10).map((stock) => {
                 const isUp = stock.change >= 0;
 
@@ -219,7 +307,7 @@ export default function Home() {
           )}
         </section>
 
-        {/* Feature Grid */}
+        {/* Feature Grid with GSAP Left, Center, Right Entrance */}
         <section className="py-20 bg-[#05080f] border-t border-white/5">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
@@ -235,7 +323,11 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-2xl bg-[#0b101b] border border-white/5 shadow-xl space-y-4">
+              {/* Feature 1: From Left */}
+              <div
+                ref={featureCard1Ref}
+                className="p-6 rounded-2xl bg-[#0b101b] border border-white/5 shadow-xl space-y-4"
+              >
                 <div className="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
                   <TrendingUp size={24} />
                 </div>
@@ -245,7 +337,11 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-[#0b101b] border border-white/5 shadow-xl space-y-4">
+              {/* Feature 2: From Center Bottom */}
+              <div
+                ref={featureCard2Ref}
+                className="p-6 rounded-2xl bg-[#0b101b] border border-white/5 shadow-xl space-y-4"
+              >
                 <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
                   <BarChart3 size={24} />
                 </div>
@@ -255,7 +351,11 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-[#0b101b] border border-white/5 shadow-xl space-y-4">
+              {/* Feature 3: From Right */}
+              <div
+                ref={featureCard3Ref}
+                className="p-6 rounded-2xl bg-[#0b101b] border border-white/5 shadow-xl space-y-4"
+              >
                 <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
                   <ShieldCheck size={24} />
                 </div>

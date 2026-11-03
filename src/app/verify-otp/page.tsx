@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion } from 'framer-motion';
+import gsap from 'gsap';
 import toast from 'react-hot-toast';
-import { Mail, ArrowLeft, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Mail, ArrowLeft, KeyRound, CheckCircle2, ShieldCheck } from 'lucide-react';
 import api from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -17,6 +17,11 @@ function VerifyOTPContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
 
+  // GSAP Animation Refs
+  const headerRef = useRef(null);
+  const formCardRef = useRef(null);
+  const actionsRef = useRef(null);
+
   useEffect(() => {
     if (!email) {
       toast.error('No email provided');
@@ -24,6 +29,28 @@ function VerifyOTPContent() {
       return;
     }
   }, [email, router]);
+
+  useEffect(() => {
+    if (headerRef.current && formCardRef.current) {
+      gsap.fromTo(
+        headerRef.current,
+        { opacity: 0, x: -50 },
+        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out' }
+      );
+      gsap.fromTo(
+        formCardRef.current,
+        { opacity: 0, x: 50 },
+        { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out', delay: 0.1 }
+      );
+      if (actionsRef.current) {
+        gsap.fromTo(
+          actionsRef.current,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', delay: 0.25 }
+        );
+      }
+    }
+  }, []);
 
   const handleOtpChange = (index, value) => {
     if (value.length > 1) value = value[0];
@@ -98,19 +125,14 @@ function VerifyOTPContent() {
   };
 
   return (
-    <main className="flex-1 container mx-auto px-4 sm:px-6 py-12 flex items-center justify-center relative">
+    <main className="flex-1 container mx-auto px-4 sm:px-6 py-12 flex items-center justify-center relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-cyan-600/10 rounded-full blur-[100px] pointer-events-none" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-md relative z-10"
-      >
+      <div className="w-full max-w-md relative z-10">
         <div className="p-8 rounded-3xl bg-[#0b101b] border border-white/10 shadow-2xl space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-2">
+          {/* Header (Slides in from Left) */}
+          <div ref={headerRef} className="text-center space-y-2">
             <div className="w-14 h-14 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 shadow-lg">
               <KeyRound className="w-7 h-7" />
             </div>
@@ -123,47 +145,49 @@ function VerifyOTPContent() {
             </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={submit} className="space-y-6">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-3 text-center uppercase tracking-wider">
-                Enter 6-Digit Code
-              </label>
-              <div className="flex gap-2 justify-center">
-                {otp.map((digit, index) => (
-                  <input
-                    key={index}
-                    id={`otp-${index}`}
-                    type="text"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    onPaste={handlePaste}
-                    className="w-11 h-14 text-center text-2xl font-mono font-black rounded-xl bg-white/[0.04] border border-white/10 text-cyan-300 focus:border-cyan-400 focus:bg-cyan-500/[0.05] focus:outline-none focus:ring-1 focus:ring-cyan-400 transition"
-                  />
-                ))}
+          {/* Form (Slides in from Right) */}
+          <div ref={formCardRef}>
+            <form onSubmit={submit} className="space-y-6">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-3 text-center uppercase tracking-wider">
+                  Enter 6-Digit Code
+                </label>
+                <div className="flex gap-2 justify-center">
+                  {otp.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`otp-${index}`}
+                      type="text"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      onPaste={handlePaste}
+                      className="w-11 h-14 text-center text-2xl font-mono font-black rounded-xl bg-white/[0.04] border border-white/10 text-cyan-300 focus:border-cyan-400 focus:bg-cyan-500/[0.05] focus:outline-none focus:ring-1 focus:ring-cyan-400 transition"
+                    />
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-500 mt-3 text-center">
+                  Code valid for 10 minutes
+                </p>
               </div>
-              <p className="text-[11px] text-slate-500 mt-3 text-center">
-                Code valid for 10 minutes
-              </p>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-sm rounded-xl shadow-lg shadow-cyan-500/20 transition disabled:opacity-50"
-            >
-              {loading ? 'Verifying...' : 'Verify & Launch Terminal'}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-sm rounded-xl shadow-lg shadow-cyan-500/20 transition disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? 'Verifying...' : 'Verify & Launch Terminal'}
+              </button>
+            </form>
+          </div>
 
-          {/* Actions */}
-          <div className="pt-2 border-t border-white/10 text-center space-y-3">
+          {/* Actions (Slides up) */}
+          <div ref={actionsRef} className="pt-2 border-t border-white/10 text-center space-y-3">
             <button
               onClick={handleResendOTP}
               disabled={resending}
-              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold disabled:opacity-50"
+              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold disabled:opacity-50 cursor-pointer"
             >
               {resending ? 'Sending...' : "Didn't receive code? Resend OTP"}
             </button>
@@ -171,7 +195,7 @@ function VerifyOTPContent() {
             <div>
               <button
                 onClick={() => router.push('/signup')}
-                className="inline-flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition"
+                className="inline-flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back to Signup</span>
@@ -179,7 +203,7 @@ function VerifyOTPContent() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </main>
   );
 }
